@@ -3,18 +3,26 @@ import os
 from datetime import datetime
 from colorama import Fore, Style
 
+task_runner_logo = """
+|\__/,|   (`\ 
+|_ _  |.--.) ) 
+( T   )     / 
+(((^_(((/(((_/ 𝑡𝑎𝑠𝑘 𝑟𝑢𝑛𝑛𝑒𝑟
+_________________________"""
+
 def show_lists(json_file_path):
     try:
         with open(json_file_path, 'r') as file:
             data = json.load(file)
     except Exception as e:
-        print(f"Failed to read or parse the JSON file: {e}")
+        print(Fore.RED + f"Failed to read or parse the JSON file: {e}" + Style.RESET_ALL)
         return
 
-    print("Available lists:")
-    for list_name, details in data.items():
-        print(f"{list_name} - Abbreviation: {details.get('abbreviation', 'N/A')}")
+    # Imprimir el logo en ASCII
+    print(Fore.GREEN + task_runner_logo + Style.RESET_ALL)
 
+    for list_name, details in data.items():
+        print(Fore.GREEN + "↬ " + Style.RESET_ALL + f"{list_name} " + Fore.MAGENTA + f"{details.get('abbreviation', 'N/A')}" + Style.RESET_ALL)
 
 def show_list_content(json_file_path, list_abbr):
     data = load_data(json_file_path)
