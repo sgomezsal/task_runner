@@ -198,42 +198,40 @@ def show_my_day(json_file_path, specific_categories=None):
         return
 
     today = datetime.now().strftime("%Y-%m-%d")
+    today_date = datetime.strptime(today, "%Y-%m-%d")
     weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     today_weekday = weekdays[datetime.now().weekday()]
 
-    # Default categories to show if none are specified
     default_categories = ['Calendar', 'Tickler File', 'Check-list']
-    # Mapping abbreviations to full list names
-    list_map = {details.get('abbreviation', '').lower(): list_name for list_name, details in data.items()}
-
     for list_name, details in data.items():
         abbreviation = details.get('abbreviation', 'N/A')
         if specific_categories:
             if list_name not in specific_categories and abbreviation.lower() not in specific_categories:
                 continue
-        else:
-            if list_name not in default_categories:
-                continue
+        if list_name not in default_categories:
+            continue
 
         print(f"{list_name} ({abbreviation})")
         total_tasks = 0
         completed_tasks = 0
-        task_list = details.get('tasks', {})
 
-        for task_number, task_info in task_list.items():
+        for task_number, task_info in details.get('tasks', {}).items():
             due_date = task_info.get('dueDate', '')
+            if due_date:
+                due_date_obj = datetime.strptime(due_date, "%Y-%m-%d")
+            else:
+                continue  # Skip tasks without a due date
             routine = task_info.get('routine', [])
-            if (due_date == today or today_weekday in routine or any(check_recurring(today, entry) for entry in routine)):
+
+            if due_date_obj and (due_date_obj <= today_date or today_weekday in routine or any(check_recurring(today, entry) for entry in routine)):
                 total_tasks += 1
                 if task_info.get('complete', False):
                     completed_tasks += 1
                 if specific_categories:
                     print(f"  {task_number}. {task_info.get('title')} - @dueDate={due_date}")
-                    continue
 
-        if not specific_categories:
-            print(f"  Number of tasks: {total_tasks}")
-            print(f"  Number of complete tasks: {completed_tasks}\n")
+        print(f"  Number of tasks: {total_tasks}")
+        print(f"  Number of complete tasks: {completed_tasks}\n")
 
 def check_recurring(current_date, recurring_entry):
     # This is a placeholder for actual recurring date checking logic
