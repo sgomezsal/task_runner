@@ -18,11 +18,14 @@ def show_lists(json_file_path):
         print(Fore.RED + f"Failed to read or parse the JSON file: {e}" + Style.RESET_ALL)
         return
 
-    # Imprimir el logo en ASCII
     print(Fore.GREEN + task_runner_logo + Style.RESET_ALL)
+    print(Fore.GREEN + "Available lists:" + Style.RESET_ALL)
 
     for list_name, details in data.items():
-        print(Fore.GREEN + "↬ " + Style.RESET_ALL + f"{list_name} " + Fore.MAGENTA + f"{details.get('abbreviation', 'N/A')}" + Style.RESET_ALL)
+        task_count = len(details.get('tasks', {}))  # Obtiene el número de tareas en cada lista
+        abbreviation = details.get('abbreviation', 'N/A')
+        print(Fore.GREEN + "↬ " + Style.RESET_ALL + f"{list_name} {abbreviation} " + Fore.CYAN + f"[{task_count}]" + Style.RESET_ALL)
+
 
 def show_list_content(json_file_path, list_abbr):
     data = load_data(json_file_path)

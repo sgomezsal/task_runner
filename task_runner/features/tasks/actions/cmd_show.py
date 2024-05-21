@@ -77,22 +77,21 @@ def show_linked_tasks(directory, json_file_path, category_abbr, task_number):
                     linked_categories[dst_category] = []
                 linked_categories[dst_category].append((dst_task_number, dst_task_info))
 
-        total_linked_tasks = sum(len(tasks) for tasks in linked_categories.values())
+        # Contar solo tareas con el atributo 'complete' para total y completadas
+        total_linked_tasks = sum(1 for tasks in linked_categories.values() for _, task in tasks if 'complete' in task)
         completed_linked_tasks = sum(1 for tasks in linked_categories.values() for _, task in tasks if task.get('complete', False))
+
         print(f"\033[4m{src_category} {task_number}\033[0m" + Fore.CYAN + Style.BRIGHT + f" [{completed_linked_tasks}/{total_linked_tasks}]" + Style.RESET_ALL)
 
         for category, tasks in linked_categories.items():
             print(Style.BRIGHT + Fore.WHITE + f"{category.capitalize()} ⇗" + Style.RESET_ALL)
             for dst_task_number, dst_task_info in tasks:
-                dst_category_abbr = data[category]['abbreviation'].lower()  # Acceder a la abreviatura correcta
+                dst_category_abbr = data[category]['abbreviation'].lower()
                 if 'complete' not in dst_task_info:
                     status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL  # Triangle for file tasks
+                    print(f"  {status_symbol} {dst_task_info.get('title', 'No title available')}" + Fore.MAGENTA + f" {dst_category_abbr} {dst_task_number}" + Style.RESET_ALL)
                 else:
-                    status_symbol = Fore.RED + "x" + Style.RESET_ALL if not dst_task_info.get('complete', False) else Fore.GREEN + "✓" + Style.RESET_ALL
-                print(f"  {status_symbol} {dst_task_info.get('title', 'No title available')}" + Fore.MAGENTA + f" {dst_category_abbr} {dst_task_number}" + Style.RESET_ALL)
-
+                    status_symbol = Fore.RED + "x" + Style.RESET_ALL if not dst_task_info['complete'] else Fore.GREEN + "✓" + Style.RESET_ALL
+                    print(f"  {status_symbol} {dst_task_info.get('title', 'No title available')}" + Fore.MAGENTA + f" {dst_category_abbr} {dst_task_number}" + Style.RESET_ALL)
     else:
         print(Fore.YELLOW + f"No links found for task {task_number} in category '{src_category}'." + Style.RESET_ALL)
-
-    
-
