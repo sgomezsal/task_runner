@@ -36,7 +36,7 @@ def main():
     list_parser.add_argument('-r', '--rename', nargs=3, metavar=('OLD_NAME', 'NEW_NAME', 'NEW_ABBREVIATION'), help="Rename a list.")
     list_parser.add_argument('-s', '--show', nargs='?', const='', help="Show lists or tasks within a specific list.")
     list_parser.add_argument('-sf', '--show-filters', nargs='+', help="Show available filters for tasks within a specific list or apply filters. Usage: -sf LIST_ABBR [@filter='value' ...]")
-    list_parser.add_argument('-sd', '--show-day', action='store_true', help="Show tasks for the day")
+    list_parser.add_argument('-sd', '--show-day', nargs='?', const='', help="Show tasks for the day, optionally specify a category")
 
 
     tasks_parser = subparsers.add_parser('tasks', help="Manage tasks")
@@ -83,8 +83,10 @@ def main():
                 show_filtered_tasks(directory, json_file_path, list_abbr, filters)
             else:
                 print("Specify a list abbreviation to filter.")
-        elif args.show_day:
+        elif args.show_day == '':
             show_my_day(json_file_path)
+        else:
+            show_my_day(json_file_path, specific_categories=[args.show_day])
 
     elif args.command == 'tasks':
         if args.list and args.list != default_list and not check_list_json(json_file_path, args.list):

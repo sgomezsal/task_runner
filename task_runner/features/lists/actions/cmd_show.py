@@ -202,7 +202,7 @@ def show_my_day(json_file_path, specific_categories=None):
     today_weekday = weekdays[datetime.now().weekday()]
 
     # Default categories to show if none are specified
-    default_categories = ['Calendar', 'Tickler File', 'Checklist']
+    default_categories = ['Calendar', 'Tickler File', 'Check-list']
     # Mapping abbreviations to full list names
     list_map = {details.get('abbreviation', '').lower(): list_name for list_name, details in data.items()}
 
@@ -238,6 +238,3 @@ def show_my_day(json_file_path, specific_categories=None):
 def check_recurring(current_date, recurring_entry):
     # This is a placeholder for actual recurring date checking logic
     return False
-
-
-
