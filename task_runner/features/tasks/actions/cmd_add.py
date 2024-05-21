@@ -20,10 +20,13 @@ def add_task(directory, json_file_path, extension_file, task_names, list_input, 
         template_data = load_template(directory, template)
         # Interact with the user to fill empty fields in the template
         for key, value in template_data.items():
-            if value == "":
+            if value == "" or (isinstance(value, list) and not value[0]):
                 print(Fore.CYAN + f"The template field '{key}' is empty." + Style.RESET_ALL)
-                new_value = input(Fore.GREEN + "Please enter a value: " + Style.RESET_ALL)
-                template_data[key] = new_value
+                user_input = input(Fore.GREEN + "Please enter a value (for multiple values, separate by commas): " + Style.RESET_ALL)
+                if isinstance(value, list):  # If the template expects a list, split the input into a list
+                    template_data[key] = [item.strip() for item in user_input.split(',')]
+                else:
+                    template_data[key] = user_input
 
     for task_name in task_names:
         file_name = f"{task_name.replace(' ', '_')}.{extension_file}"
