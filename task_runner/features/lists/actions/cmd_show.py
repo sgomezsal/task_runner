@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from colorama import Fore, Style
+import re
 
 task_runner_logo = """
 |\__/,|   (`\ 
@@ -27,7 +28,7 @@ def show_lists(json_file_path):
         print(Fore.GREEN + "↬ " + Style.RESET_ALL + f"{list_name} {abbreviation} " + Fore.CYAN + f"[{task_count}]" + Style.RESET_ALL)
 
 
-def show_list_content(json_file_path, list_abbr):
+def show_list_content(directory, json_file_path, list_abbr):
     data = load_data(json_file_path)
     list_name = get_list_from_abbr(data, list_abbr)
     if not list_name:
@@ -35,14 +36,15 @@ def show_list_content(json_file_path, list_abbr):
         return
     print(Style.BRIGHT + f"{list_name} ({data[list_name]['abbreviation']})" + Style.RESET_ALL)
     for task_number, task_info in data[list_name].get('tasks', {}).items():
-        if not 'complete' in task_info:
-            # This assumes that tasks representing files have a 'file' field
-            status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL  # Triangle for file tasks
+        file_path = os.path.join(directory, task_info['file'])  # Asegúrate de que la ruta es correcta
+        file_filled_symbol = Fore.YELLOW + "Ξ" + Style.RESET_ALL if os.path.exists(file_path) and os.path.getsize(file_path) > 0 else ""
+        if 'complete' not in task_info:
+            status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL
             file_extension = os.path.splitext(task_info['file'])[1]
-            print(f"  {task_number}. {status_symbol} {task_info['title']} ({file_extension})")
+            print(f"  {task_number}. {status_symbol} {task_info.get('title', 'No title')} ({file_extension}) {file_filled_symbol}")
         else:
-            status_symbol = Fore.RED + "x" + Style.RESET_ALL if not task_info.get('complete', False) else Fore.GREEN + "✓" + Style.RESET_ALL
-            print(f"  {task_number}. {status_symbol} {task_info.get('title', 'No title')}")
+            status_symbol = Fore.RED + "x" + Style.RESET_ALL if not task_info['complete'] else Fore.GREEN + "✓" + Style.RESET_ALL
+            print(f"  {task_number}. {status_symbol} {task_info.get('title', 'No title')} {file_filled_symbol}")
 
 
 def parse_filters(filter_args):
@@ -69,8 +71,6 @@ def parse_filters(filter_args):
 
     return filters
 
-
-
 def apply_filters_to_tasks(tasks, filters):
     filtered_tasks = []
     for task_id, task_details in tasks.items():
@@ -92,7 +92,7 @@ def get_list_from_abbr(data, abbr):
             return list
     return abbr  # Return the abbreviation as is if no match found
 
-def show_filtered_tasks(json_file_path, list_abbr, filters):
+def show_filtered_tasks(directory, json_file_path, list_abbr, filters):
     data = load_data(json_file_path)
 
     list_name = get_list_from_abbr(data, list_abbr)
@@ -108,17 +108,18 @@ def show_filtered_tasks(json_file_path, list_abbr, filters):
     else:
         filtered_tasks = {num: task for num, task in tasks.items() if check_task_against_filters(task, parsed_filters)}
         if filtered_tasks:
-            print(f"\033[4m{list_name} ({list_abbr}) with applied filters:\033[0m")
+            print(f"\033[4m{list_name} ({list_abbr}):\033[0m")
             for num, task in filtered_tasks.items():
-                if not 'complete' in task:
-                    task_details = " - ".join(f"{key}={task.get(key, 'N/A')}" for group, _ in parsed_filters for key, _ in group if key in task)
-                    status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL 
+                file_path = os.path.join(directory, task['file'])  # Asegúrate de que la ruta es correcta
+                file_filled_symbol = Fore.YELLOW + "Ξ" + Style.RESET_ALL if os.path.exists(file_path) and os.path.getsize(file_path) > 0 else ""
+                if 'complete' not in task:
+                    status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL
                     file_extension = os.path.splitext(task['file'])[1]
-                    print(f"  {num}. {status_symbol} {task['title']} ({file_extension}) - {task_details}")
+                    print(f"  {num}. {status_symbol} {task['title']} ({file_extension}) - {task_details} {file_filled_symbol}")
                 else:
                     status_symbol = Fore.RED + "x" + Style.RESET_ALL if not task['complete'] else Fore.GREEN + "✓" + Style.RESET_ALL
                     task_details = " - ".join(f"{key}={task.get(key, 'N/A')}" for group, _ in parsed_filters for key, _ in group if key in task)
-                    print(f"  {num}. {status_symbol} {task['title']} - {task_details}")
+                    print(f"  {num}. {status_symbol} {task['title']} - {task_details} {file_filled_symbol}")
         else:
             print("No tasks match the specified filters.")
 
@@ -149,21 +150,29 @@ def show_available_filters(json_file_path, list_abbr):
         print(f"No filters available for tasks in list '{list_name}'.")
 
 
+def wildcard_to_regex(wildcard):
+    """ Convert wildcard pattern to a regex pattern. """
+    regex = re.escape(wildcard)  # Escape all special characters except for '*' and '?'
+    regex = regex.replace(r'\*', '.*')  # Replace '*' with '.*' (0 or more of any character)
+    regex = regex.replace(r'\?', '.')  # Replace '?' with '.' (1 of any character)
+    return '^' + regex + '$'  # Ensure the pattern matches the entire string
+
 def check_task_against_filters(task, filters):
     if not filters:
-        return True  # Si no se proporcionan filtros, todas las tareas deben coincidir
+        return True  # No filters provided, all tasks match
 
-    overall_result = True  # Comienza con True para 'and', cambia si el primer operador es 'or'
+    overall_result = True  # Start true for 'and', change if the first operator is 'or'
     for filter_group, logic_operator in filters:
-        group_result = (logic_operator == 'and')  # Comienza verdadero para 'and', falso para 'or'
+        group_result = (logic_operator == 'and')  # Start true for 'and', false for 'or'
         for key, value in filter_group:
             actual_value = task.get(key)
 
-            # Verifica si el valor coincide o si solo se supone que el atributo debe existir
             if value is not None:
-                current_match = (actual_value == value)
+                # Use the wildcard_to_regex function to convert wildcard patterns to regex patterns
+                pattern = wildcard_to_regex(value)
+                current_match = bool(re.match(pattern, actual_value)) if actual_value is not None else False
             else:
-                # Si no se especifica un valor, verifique la existencia del atributo
+                # If no value is specified, check for the existence of the attribute
                 current_match = (actual_value is not None)
 
             if logic_operator == 'and':

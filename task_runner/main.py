@@ -75,12 +75,12 @@ def main():
             if args.show == '':
                 show_lists(json_file_path)
             else:
-                show_list_content(json_file_path, args.show)
+                show_list_content(directory, json_file_path, args.show)
         elif args.show_filters is not None:
             if args.show_filters:
                 list_abbr = args.show_filters[0]
                 filters = args.show_filters[1:]
-                show_filtered_tasks(json_file_path, list_abbr, filters)
+                show_filtered_tasks(directory, json_file_path, list_abbr, filters)
             else:
                 print("Specify a list abbreviation to filter.")
         elif args.show_day:
