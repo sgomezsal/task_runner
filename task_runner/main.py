@@ -52,6 +52,7 @@ def main():
     tasks_parser.add_argument('-rn', '--rename-name', nargs=3, metavar=('CATEGORY_ABBR', 'TASK_NUMBER', 'NEW_NAME'), help="Modify the name of a task")
     tasks_parser.add_argument('-rp', '--rename-property', nargs=4, metavar=('CATEGORY_ABBR', 'TASK_NUMBER', 'OLD_PROP_NAME', 'NEW_PROP_NAME'), help="Modify the name of a property in a task")
     tasks_parser.add_argument('-s', '--show', nargs='+', help="Show the task file using specified viewer. Format: CATEGORY_ABBR TASK_NUMBER [--typst]")
+    tasks_parser.add_argument('--typst', action='store_true', help="Use typst-preview to view the task")
     tasks_parser.add_argument('-sl', '--show-links', nargs=2, metavar=('CATEGORY_ABBR', 'TASK_NUMBER'), help="Show linked tasks. Format: CATEGORY_ABBR TASK_NUMBER")
     tasks_parser.add_argument('-c', '--check', nargs='+', help="Check tasks as completed. Format: CATEGORY TASK_NUMBERS...")
     tasks_parser.add_argument('-e', '--edit', nargs=2, metavar=('CATEGORY_ABBR', 'TASK_NUMBER'), help="Edit the specified task file")
@@ -186,7 +187,7 @@ def main():
         elif args.show:
             category_abbr = args.show[0]
             task_number = args.show[1]
-            preview = '--typst' in args.show
+            preview = args.typst  # Directly use the flag set by argparse
             show_tasks(json_file_path, category_abbr, int(task_number), preview)
         
         elif args.show_links:
