@@ -3,4 +3,4 @@
 __pycache__/
 *.py[cod]
 *$py.class
-task_runner/ask_runner/.app_data/
+task_runner/.app_data/
