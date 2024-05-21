@@ -1,0 +1,38 @@
+{
+    "InBox": {
+        "abbreviation": "ib",
+        "tasks": {}
+    },
+    "Reference Material": {
+        "abbreviation": "rf",
+        "tasks": {}
+    },
+    "Someday Maybe": {
+        "abbreviation": "sm",
+        "tasks": {}
+    },
+    "Calendar": {
+        "abbreviation": "cl",
+        "tasks": {}
+    },
+    "Tickler File": {
+        "abbreviation": "tf",
+        "tasks": {}
+    },
+    "Next Actions": {
+        "abbreviation": "nx",
+        "tasks": {}
+    },
+    "Projects": {
+        "abbreviation": "pj",
+        "tasks": {}
+    },
+    "Waiting": {
+        "abbreviation": "wa",
+        "tasks": {}
+    },
+    "Check-list": {
+        "abbreviation": "ck",
+        "tasks": {}
+    }
+}
