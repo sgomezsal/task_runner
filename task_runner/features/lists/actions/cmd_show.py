@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from colorama import Fore, Style
 
 def show_lists(json_file_path):
     try:
@@ -19,17 +20,17 @@ def show_list_content(json_file_path, list_abbr):
     data = load_data(json_file_path)
     list_name = get_list_from_abbr(data, list_abbr)
     if not list_name:
-        print(f"No list found with abbreviation '{list_abbr}'.")
+        print(Fore.RED + f"No list found with abbreviation '{list_abbr}'." + Style.RESET_ALL)
         return
-    print(f"\033[4m{list_name} ({data[list_name]['abbreviation']})\033[0m")
+    print(Style.BRIGHT + f"{list_name} ({data[list_name]['abbreviation']})" + Style.RESET_ALL)
     for task_number, task_info in data[list_name].get('tasks', {}).items():
         if not 'complete' in task_info:
             # This assumes that tasks representing files have a 'file' field
-            status_symbol = "\033[93m△"  # Triangle for file tasks
+            status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL  # Triangle for file tasks
             file_extension = os.path.splitext(task_info['file'])[1]
             print(f"  {task_number}. {status_symbol} {task_info['title']} ({file_extension})")
         else:
-            status_symbol = "\033[91m◯" if not task_info.get('complete', False) else "\033[92m✓"
+            status_symbol = Fore.RED + "x" + Style.RESET_ALL if not task_info.get('complete', False) else Fore.GREEN + "✓" + Style.RESET_ALL
             print(f"  {task_number}. {status_symbol} {task_info.get('title', 'No title')}")
 
 
@@ -100,11 +101,11 @@ def show_filtered_tasks(json_file_path, list_abbr, filters):
             for num, task in filtered_tasks.items():
                 if not 'complete' in task:
                     task_details = " - ".join(f"{key}={task.get(key, 'N/A')}" for group, _ in parsed_filters for key, _ in group if key in task)
-                    status_symbol = "\033[93m△"  # Triangle for file tasks
+                    status_symbol = Fore.YELLOW + "△" + Style.RESET_ALL 
                     file_extension = os.path.splitext(task['file'])[1]
                     print(f"  {num}. {status_symbol} {task['title']} ({file_extension}) - {task_details}")
                 else:
-                    status_symbol = "\033[91m◯" if not task['complete'] else "\033[92m✓"
+                    status_symbol = Fore.RED + "x" + Style.RESET_ALL if not task['complete'] else Fore.GREEN + "✓" + Style.RESET_ALL
                     task_details = " - ".join(f"{key}={task.get(key, 'N/A')}" for group, _ in parsed_filters for key, _ in group if key in task)
                     print(f"  {num}. {status_symbol} {task['title']} - {task_details}")
         else:
