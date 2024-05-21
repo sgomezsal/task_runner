@@ -158,22 +158,25 @@ def wildcard_to_regex(wildcard):
     return '^' + regex + '$'  # Ensure the pattern matches the entire string
 
 def check_task_against_filters(task, filters):
-    if not filters:
-        return True  # No filters provided, all tasks match
-
     overall_result = True  # Start true for 'and', change if the first operator is 'or'
     for filter_group, logic_operator in filters:
         group_result = (logic_operator == 'and')  # Start true for 'and', false for 'or'
         for key, value in filter_group:
             actual_value = task.get(key)
 
-            if value is not None:
-                # Use the wildcard_to_regex function to convert wildcard patterns to regex patterns
-                pattern = wildcard_to_regex(value)
-                current_match = bool(re.match(pattern, actual_value)) if actual_value is not None else False
+            if isinstance(actual_value, list):
+                if value:
+                    pattern = wildcard_to_regex(value)
+                    current_match = any(re.match(pattern, str(item)) for item in actual_value) if actual_value else False
+                else:
+                    # If value is empty and the actual_value is a list, check if the list is not empty
+                    current_match = bool(actual_value)
             else:
-                # If no value is specified, check for the existence of the attribute
-                current_match = (actual_value is not None)
+                if value:
+                    pattern = wildcard_to_regex(value)
+                    current_match = bool(re.match(pattern, str(actual_value))) if actual_value is not None else False
+                else:
+                    current_match = (actual_value is not None)
 
             if logic_operator == 'and':
                 group_result = group_result and current_match
@@ -186,6 +189,7 @@ def check_task_against_filters(task, filters):
             overall_result = overall_result or group_result
 
     return overall_result
+
 
 # Function to show tasks for the day
 def show_my_day(json_file_path, specific_categories=None):
