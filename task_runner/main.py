@@ -19,7 +19,7 @@ from features.lists.actions.cmd_delete import delete_list
 from features.lists.actions.cmd_rename import rename_list
 from features.lists.actions.cmd_show import show_list_content, show_lists, show_filtered_tasks, show_my_day
 
-directory = "/home/nixos/task_runner/task_runner/.app_data"
+directory = "/home/sgomezsal/task_runner/task_runner/.app_data"
 json_file_path = os.path.join(directory, 'app_data.json')
 extension_file = "typ"
 default_list = "ib"

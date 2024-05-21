@@ -5,6 +5,7 @@ from datetime import datetime
 from features.tasks.utils.json_manager import read_json_file, update_json, get_list_json, write_json_file
 from features.tasks.attributes.templates import load_template
 from features.tasks.utils.file_utils import ensure_directory_exists
+from colorama import Fore, Style
 
 def add_task(directory, json_file_path, extension_file, task_names, list_input, template=None):
     """
@@ -20,7 +21,8 @@ def add_task(directory, json_file_path, extension_file, task_names, list_input, 
         # Interact with the user to fill empty fields in the template
         for key, value in template_data.items():
             if value == "":
-                new_value = input(f"The template field '{key}' is empty. Please enter a value: ")
+                print(Fore.CYAN + f"The template field '{key}' is empty." + Style.RESET_ALL)
+                new_value = input(Fore.GREEN + "Please enter a value: " + Style.RESET_ALL)
                 template_data[key] = new_value
 
     for task_name in task_names:
@@ -29,14 +31,14 @@ def add_task(directory, json_file_path, extension_file, task_names, list_input, 
         ensure_directory_exists(directory)
 
         if os.path.exists(file_path):
-            print(f"Task '{task_name}' already exists.")
+            print(Fore.RED + f"Task '{task_name}' already exists." + Style.RESET_ALL)
             continue
 
         with open(file_path, 'w') as file:
             pass  # Save the template data to the file
 
         next_number, list_name, abbreviation = update_json(json_file_path, get_list_json(data, list_input), task_name, file_path, data, template_data)
-        print(f"Added task: '{task_name}' {abbreviation} {next_number}")
+        print(Fore.GREEN + f"✔  Added task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{abbreviation} {next_number}" + Style.RESET_ALL)
         created_files.append(file_path)
 
     return created_files

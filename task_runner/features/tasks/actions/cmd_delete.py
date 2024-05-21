@@ -1,6 +1,8 @@
 import os
 from features.tasks.utils.json_manager import read_json_file, write_json_file
 from features.tasks.attributes.templates import load_template
+from colorama import Fore, Style
+
 
 def delete_tasks(json_file_path, commands):
     """
@@ -21,11 +23,11 @@ def delete_tasks(json_file_path, commands):
                 break
 
         if not list:
-            print(f"\033[91mNo list found for abbreviation '{list_abbr}'.\033[0m")
+            print(Fore.RED + f"No list found for abbreviation '{list_abbr}'." + Style.RESET_ALL)
             continue
 
         if 'tasks' not in data[list]:
-            print(f"\033[91mNo tasks in list '{list}'.\033[0m")
+            print(Fore.RED + f"No tasks in list '{list}'." + Style.RESET_ALL)
             continue
 
         to_delete = []
@@ -33,7 +35,7 @@ def delete_tasks(json_file_path, commands):
             if str(task_number) in data[list]['tasks']:
                 to_delete.append(str(task_number))
             else:
-                print(f"\033[91mNo task number {task_number} in list '{list}'.\033[0m")
+                print(Fore.YELLOW + f"No task number {task_number} in list '{list}'." + Style.RESET_ALL)
 
         # Delete task files and update tasks
         tasks_deleted = False
@@ -42,13 +44,14 @@ def delete_tasks(json_file_path, commands):
             task_name = data[list]['tasks'][task_number]['title']
             if os.path.exists(task_file):
                 os.remove(task_file)
-                print(f"\033[91m✕\033[0m \033[90mDeleted task:\033[0m '{task_name}' \033[95m{list_abbr} {task_number}\033[0m")
+                print(Fore.RED + f"✕ Deleted task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{list_abbr} {task_number}" + Style.RESET_ALL)
                 tasks_deleted = True
             del data[list]['tasks'][task_number]
         if tasks_deleted:
-            print(f"\033[90m⫸ The tasks in list\033[0m \033[95m{list_abbr}\033[0m \033[92mupdate\033[0m")
+            print(Fore.GREEN + f"Tasks in list '{list_abbr}' updated successfully." + Style.RESET_ALL)
+
         # Renumber tasks
-        new_keys = sorted((int(key) for key in data[list]['tasks'] if key.isdigit()), key=int)
+        new_keys = sorted((int(key) for key in data[list]['tasks']), key=int)
         new_data = {str(i+1): data[list]['tasks'][str(key)] for i, key in enumerate(new_keys)}
         data[list]['tasks'] = new_data
 
