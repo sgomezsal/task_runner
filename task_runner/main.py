@@ -21,7 +21,7 @@ from features.lists.actions.cmd_show import show_list_content, show_lists, show_
 
 # Obtiene el directorio donde se encuentra el script en ejecución
 base_directory = os.path.dirname(os.path.abspath(__file__))
-subdirectory = './.app_data'
+subdirectory = 'task_runner/.app_data'
 directory = os.path.join(base_directory, subdirectory)
 json_file_path = os.path.join(directory, 'app_data.json')
 
