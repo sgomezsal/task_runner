@@ -19,10 +19,13 @@ from features.lists.actions.cmd_delete import delete_list
 from features.lists.actions.cmd_rename import rename_list
 from features.lists.actions.cmd_show import show_list_content, show_lists, show_filtered_tasks, show_my_day
 
-current_directory = os.getcwd()
+# Obtiene el directorio donde se encuentra el script en ejecución
+base_directory = os.path.dirname(os.path.abspath(__file__))
 subdirectory = './.app_data'
-directory = os.path.join(current_directory, subdirectory)
+directory = os.path.join(base_directory, subdirectory)
 json_file_path = os.path.join(directory, 'app_data.json')
+
+# Definiciones adicionales
 extension_file = "typ"
 default_list = "ib"
 
