@@ -15,13 +15,13 @@ def edit_task(json_file_path, list_abbr, task_number):
         print(f"No category found for abbreviation '{list_abbr}'.")
         return
 
-    # Check if the task exists within the 'tasks' dictionary of the category
     if str(task_number) not in data[category]['tasks']:
         print(f"No task number {task_number} in category '{category}'.")
         return
 
-    # Access the task file from the 'tasks' sub-dictionary
-    task_file = data[category]['tasks'][str(task_number)]['file']
+    task_info = data[category]['tasks'][str(task_number)]
+    task_file = os.path.expanduser(task_info['file'])  # Expand the user's home directory shortcut
+
     if not os.path.exists(task_file):
         print(f"Task file not found: {task_file}")
         return

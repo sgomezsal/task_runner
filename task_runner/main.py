@@ -136,9 +136,12 @@ def main():
             task_names = args.add_edit
             created_files = add_task(directory, json_file_path, extension_file, task_names, default_list, args.template)
             for file_path in created_files:
-                if os.path.exists(file_path):
-                    subprocess.run(['nvim', file_path])
-                    print(f"Editing task file: {file_path}")
+                full_path = os.path.expanduser(file_path)  # Expandir la ruta para manejar '~'
+                if os.path.exists(full_path):
+                    subprocess.run(['nvim', full_path])
+                    print(f"Editing task file: {full_path}")
+                else:
+                    print(f"File not found: {full_path}")
 
         elif args.add_link:
             src_category_abbr = args.add_link[0]

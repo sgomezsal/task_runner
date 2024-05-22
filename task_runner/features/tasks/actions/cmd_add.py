@@ -8,22 +8,18 @@ from features.tasks.utils.file_utils import ensure_directory_exists
 from colorama import Fore, Style
 
 def add_task(directory, json_file_path, extension_file, task_names, list_input, template=None):
-    """
-    Adds tasks to the system by creating files and updating task information in the JSON file.
-    Returns the path of the created task file.
-    """
+    json_file_path = os.path.expanduser(json_file_path)
     data = read_json_file(json_file_path)
     template_data = {}
     created_files = []
 
     if template:
         template_data = load_template(directory, template)
-        # Interact with the user to fill empty fields in the template
         for key, value in template_data.items():
             input_message = "Please enter a value: " if not isinstance(value, list) else "Please enter a value (for multiple values, separate by commas): "
             print(Fore.CYAN + f"The template field '{key}' is empty." + Style.RESET_ALL)
             user_input = input(Fore.GREEN + input_message + Style.RESET_ALL)
-            if isinstance(value, list):  # If the template expects a list, split the input into a list
+            if isinstance(value, list):
                 template_data[key] = [item.strip() for item in user_input.split(',')]
             else:
                 template_data[key] = user_input
@@ -37,12 +33,13 @@ def add_task(directory, json_file_path, extension_file, task_names, list_input, 
             print(Fore.RED + f"Task '{task_name}' already exists." + Style.RESET_ALL)
             continue
 
-        with open(file_path, 'w') as file:
-            pass  # Save the template data to the file
+        # Crea el archivo sin escribir nada en él
+        open(file_path, 'w').close()
 
-        next_number, list_name, abbreviation = update_json(json_file_path, get_list_json(data, list_input), task_name, file_path, data, template_data)
+        relative_path = os.path.join('~', os.path.relpath(file_path, start=os.path.expanduser("~")))
+        next_number, list_name, abbreviation = update_json(json_file_path, get_list_json(data, list_input), task_name, relative_path, data, template_data)
         print(Fore.GREEN + f"✔  Added task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{abbreviation} {next_number}" + Style.RESET_ALL)
-        created_files.append(file_path)
+        created_files.append(relative_path)
 
     return created_files
 

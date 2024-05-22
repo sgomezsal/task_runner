@@ -5,55 +5,52 @@ from colorama import Fore, Style
 
 
 def delete_tasks(json_file_path, commands):
-    """
-    Delete tasks specified by the commands dictionary from the JSON file.
-
-    Parameters:
-        json_file_path (str): The path to the JSON file.
-        commands (dict): Dictionary with list abbreviation as keys and list of task numbers as values.
-    """
     data = read_json_file(json_file_path)
 
-    # Process each command
     for list_abbr, task_numbers in commands.items():
-        list = None
+        list_name = None
         for cat, details in data.items():
             if 'abbreviation' in details and details['abbreviation'] == list_abbr:
-                list = cat
+                list_name = cat
                 break
 
-        if not list:
+        if not list_name:
             print(Fore.RED + f"No list found for abbreviation '{list_abbr}'." + Style.RESET_ALL)
             continue
 
-        if 'tasks' not in data[list]:
-            print(Fore.RED + f"No tasks in list '{list}'." + Style.RESET_ALL)
+        if 'tasks' not in data[list_name]:
+            print(Fore.RED + f"No tasks in list '{list_name}'." + Style.RESET_ALL)
             continue
 
         to_delete = []
         for task_number in task_numbers:
-            if str(task_number) in data[list]['tasks']:
+            if str(task_number) in data[list_name]['tasks']:
                 to_delete.append(str(task_number))
             else:
-                print(Fore.YELLOW + f"No task number {task_number} in list '{list}'." + Style.RESET_ALL)
+                print(Fore.YELLOW + f"No task number {task_number} in list '{list_name}'." + Style.RESET_ALL)
 
-        # Delete task files and update tasks
-        tasks_deleted = False
         for task_number in to_delete:
-            task_file = data[list]['tasks'][task_number]['file']
-            task_name = data[list]['tasks'][task_number]['title']
-            if os.path.exists(task_file):
-                os.remove(task_file)
-                print(Fore.RED + f"✕ Deleted task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{list_abbr} {task_number}" + Style.RESET_ALL)
-                tasks_deleted = True
-            del data[list]['tasks'][task_number]
-        if tasks_deleted:
-            print(Fore.GREEN + f"Tasks in list '{list_abbr}' updated successfully." + Style.RESET_ALL)
+            task_info = data[list_name]['tasks'][task_number]
+            task_file = os.path.expanduser(task_info['file'])
+            task_name = task_info['title']
+
+            try:
+                if os.path.exists(task_file):
+                    os.remove(task_file)
+                    print(Fore.RED + f"✕ Deleted task file:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{list_abbr} {task_number}" + Style.RESET_ALL)
+                else:
+                    print(Fore.YELLOW + f"File not found: {task_file}" + Style.RESET_ALL)
+            except Exception as e:
+                print(Fore.RED + f"Error deleting file {task_file}: {e}" + Style.RESET_ALL)
+
+            del data[list_name]['tasks'][task_number]
 
         # Renumber tasks
-        new_keys = sorted((int(key) for key in data[list]['tasks']), key=int)
-        new_data = {str(i+1): data[list]['tasks'][str(key)] for i, key in enumerate(new_keys)}
-        data[list]['tasks'] = new_data
+        new_keys = sorted((int(key) for key in data[list_name]['tasks']), key=int)
+        new_data = {str(i+1): data[list_name]['tasks'][str(key)] for i, key in enumerate(new_keys)}
+        data[list_name]['tasks'] = new_data
+
+        print(Fore.GREEN + f"Tasks in list '{list_abbr}' updated successfully." + Style.RESET_ALL)
 
     write_json_file(data, json_file_path)
 
