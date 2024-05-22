@@ -15,17 +15,28 @@ def rename_task_name(json_file_path, extension_file, category_abbr, task_number,
                 print(f"Task number {task_number} not found in category {category}.")
                 return
             
-            old_file_path = task['file']
-            new_file_path = os.path.join(os.path.dirname(old_file_path), f"{new_name.replace(' ', '_')}.{extension_file}")
+            old_file_path = os.path.expanduser(task['file'])
+            new_file_name = f"{new_name.replace(' ', '_')}.{extension_file}"
+            new_file_path = os.path.join(os.path.dirname(old_file_path), new_file_name)
             
             # Rename the file on the filesystem
             if os.path.exists(old_file_path):
-                os.rename(old_file_path, new_file_path)
-                print(f"Renamed file from {old_file_path} to {new_file_path}")
+                try:
+                    os.rename(old_file_path, new_file_path)
+                    print(f"Renamed file from {old_file_path} to {new_file_path}")
+                except OSError as e:
+                    print(f"Error renaming file: {e}")
+                    return
             
-            # Update the JSON data
+            # Update the JSON data to keep the '~' if used
+            home_path = os.path.expanduser("~")
+            if old_file_path.startswith(home_path):
+                relative_path = f"~{new_file_path[len(home_path):]}"
+            else:
+                relative_path = new_file_path
+            
             task['title'] = new_name
-            task['file'] = new_file_path
+            task['file'] = relative_path
             write_json_file(data, json_file_path)
             print(f"Updated task name to {new_name} in category {category}")
             break
