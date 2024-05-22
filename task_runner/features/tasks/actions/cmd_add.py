@@ -33,15 +33,49 @@ def add_task(directory, json_file_path, extension_file, task_names, list_input, 
             print(Fore.RED + f"Task '{task_name}' already exists." + Style.RESET_ALL)
             continue
 
-        # Crea el archivo sin escribir nada en él
-        open(file_path, 'w').close()
-
+        open(file_path, 'w').close()  # Crea el archivo sin escribir nada en él
         relative_path = os.path.join('~', os.path.relpath(file_path, start=os.path.expanduser("~")))
         next_number, list_name, abbreviation = update_json(json_file_path, get_list_json(data, list_input), task_name, relative_path, data, template_data)
-        print(Fore.GREEN + f"✔  Added task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{abbreviation} {next_number}" + Style.RESET_ALL)
         created_files.append(relative_path)
+        print(Fore.GREEN + f"✔  Added task:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{abbreviation} {next_number}" + Style.RESET_ALL)
 
+        # Handle linking if 'nodes' are part of the template
+        if 'nodes' in template_data:
+            add_bidirectional_links(data, abbreviation, next_number, template_data['nodes'])
+
+    write_json_file(data, json_file_path)
     return created_files
+
+def add_bidirectional_links(data, src_list_abbr, src_task_number, links):
+    src_list_name = next((lname for lname, ldetails in data.items() if ldetails.get('abbreviation') == src_list_abbr), None)
+    if not src_list_name:
+        print(f"Source list abbreviation '{src_list_abbr}' not found.")
+        return
+
+    for link in links:
+        dst_list_abbr, dst_task_number = link.split()
+        dst_list_name = next((lname for lname, ldetails in data.items() if ldetails.get('abbreviation') == dst_list_abbr), None)
+        if dst_list_name and dst_task_number in data[dst_list_name]['tasks']:
+            dst_task = data[dst_list_name]['tasks'][dst_task_number]
+            link_notation = f"{dst_list_abbr.lower()} {dst_task_number}"
+            reverse_link_notation = f"{src_list_abbr.lower()} {src_task_number}"
+
+            # Add link to source task
+            src_task = data[src_list_name]['tasks'][src_task_number]
+            if 'nodes' not in src_task:
+                src_task['nodes'] = []
+            if link_notation not in src_task['nodes']:
+                src_task['nodes'].append(link_notation)
+
+            # Add reverse link to destination task
+            if 'nodes' not in dst_task:
+                dst_task['nodes'] = []
+            if reverse_link_notation not in dst_task['nodes']:
+                dst_task['nodes'].append(reverse_link_notation)
+
+            print(f"Link added between {src_list_abbr} {src_task_number} and {dst_list_abbr} {dst_task_number}.")
+        else:
+            print(f"Destination task or category for link '{dst_list_abbr} {dst_task_number}' not found.")
 
 def add_task_properties(directory, json_file_path, list_abbr, task_number, properties, template_name=None):
     data = read_json_file(json_file_path)
@@ -99,7 +133,7 @@ def add_links(json_file_path, src_category_abbr, src_task_number, links):
     src_task = src_tasks.get(str(src_task_number))
     
     if not src_task:
-        print(f"Source task number {src_task_number} not found in category {src_category_abbr}.")
+        print(f"Source task number {src_task_number} not found in category {src_category}.")
         return
 
     if 'nodes' not in src_task:
@@ -111,20 +145,33 @@ def add_links(json_file_path, src_category_abbr, src_task_number, links):
         dst_category_abbr = links[i]
         dst_task_number = links[i + 1]
         dst_category = find_category_by_abbreviation(data, dst_category_abbr)
+
         if dst_category and str(dst_task_number) in data[dst_category]['tasks']:
+            dst_task = data[dst_category]['tasks'][str(dst_task_number)]
             link_notation = f"{dst_category_abbr.lower()} {dst_task_number}"
+            reverse_link_notation = f"{src_category_abbr.lower()} {src_task_number}"
+
+            # Add link to source task
             if link_notation not in src_task['nodes']:
                 src_task['nodes'].append(link_notation)
                 print(f"Link added between {src_category_abbr} {src_task_number} and {dst_category_abbr} {dst_task_number}.")
                 success_count += 1
-            else:
-                print(f"Link already exists between {src_category_abbr} {src_task_number} and {dst_category_abbr} {dst_task_number}.")
+
+            # Add reverse link to destination task
+            if 'nodes' not in dst_task:
+                dst_task['nodes'] = []
+
+            if reverse_link_notation not in dst_task['nodes']:
+                dst_task['nodes'].append(reverse_link_notation)
+                print(f"Reverse link added from {dst_category_abbr} {dst_task_number} to {src_category_abbr} {src_task_number}.")
+                
         else:
             print(f"Destination task or category for link '{dst_category_abbr} {dst_task_number}' not found.")
+
         i += 2
 
     write_json_file(data, json_file_path)
-    print(f"Added {success_count} new link(s) from task {src_task_number} in category {src_category_abbr}.")
+    print(f"Added {success_count} new link(s) from task {src_task_number} in category {src_category}.")
 
 def load_json_file(json_file_path):
     with open(json_file_path, 'r') as file:
