@@ -4,6 +4,7 @@ import subprocess
 from colorama import Fore, Style
 
 def show_tasks(json_file_path, category_abbr, task_number, preview=False):
+    json_file_path = os.path.expanduser(json_file_path)
     if not os.path.exists(json_file_path):
         print("No tasks file found.")
         return
@@ -21,7 +22,7 @@ def show_tasks(json_file_path, category_abbr, task_number, preview=False):
 
     if category and str(task_number) in data[category]['tasks']:
         task_info = data[category]['tasks'][str(task_number)]
-        task_path = task_info["file"]
+        task_path = os.path.expanduser(task_info["file"])
 
         if os.path.exists(task_path):
             if preview:
