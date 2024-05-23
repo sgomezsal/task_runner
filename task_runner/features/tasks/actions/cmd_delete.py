@@ -4,6 +4,26 @@ from features.tasks.attributes.templates import load_template
 from colorama import Fore, Style
 
 
+def remove_task_links(data, list_abbr, task_number):
+    link_notation = f"{list_abbr.lower()} {task_number}"
+    for category_name, details in data.items():
+        if 'tasks' in details:
+            for task_id, task_info in details['tasks'].items():
+                if 'nodes' in task_info and link_notation in task_info['nodes']:
+                    task_info['nodes'].remove(link_notation)
+                    print(f"Removed link {link_notation} from task {task_id} in category {category_name}.")
+
+def update_task_links(data, list_abbr, old_number, new_number):
+    old_link_notation = f"{list_abbr.lower()} {old_number}"
+    new_link_notation = f"{list_abbr.lower()} {new_number}"
+    for category_name, details in data.items():
+        if 'tasks' in details:
+            for task_id, task_info in details['tasks'].items():
+                if 'nodes' in task_info and old_link_notation in task_info['nodes']:
+                    task_info['nodes'].remove(old_link_notation)
+                    task_info['nodes'].append(new_link_notation)
+                    print(f"Updated link from {old_link_notation} to {new_link_notation} in task {task_id} in category {category_name}.")
+
 def delete_tasks(json_file_path, commands):
     data = read_json_file(json_file_path)
 
@@ -30,29 +50,30 @@ def delete_tasks(json_file_path, commands):
                 print(Fore.YELLOW + f"No task number {task_number} in list '{list_name}'." + Style.RESET_ALL)
 
         for task_number in to_delete:
+            remove_task_links(data, list_abbr, task_number)
             task_info = data[list_name]['tasks'][task_number]
             task_file = os.path.expanduser(task_info['file'])
-            task_name = task_info['title']
 
             try:
                 if os.path.exists(task_file):
                     os.remove(task_file)
-                    print(Fore.RED + f"✕ Deleted task file:" + Style.RESET_ALL + f" '{task_name}' " + Fore.MAGENTA + f"{list_abbr} {task_number}" + Style.RESET_ALL)
-                else:
-                    print(Fore.YELLOW + f"File not found: {task_file}" + Style.RESET_ALL)
+                    print(Fore.RED + f"Deleted task file: '{task_file}'" + Style.RESET_ALL)
             except Exception as e:
                 print(Fore.RED + f"Error deleting file {task_file}: {e}" + Style.RESET_ALL)
 
             del data[list_name]['tasks'][task_number]
 
-        # Renumber tasks
-        new_keys = sorted((int(key) for key in data[list_name]['tasks']), key=int)
-        new_data = {str(i+1): data[list_name]['tasks'][str(key)] for i, key in enumerate(new_keys)}
+        old_keys = sorted((int(key) for key in data[list_name]['tasks']), key=int)
+        new_data = {str(i+1): data[list_name]['tasks'][str(key)] for i, key in enumerate(old_keys)}
+        for old_key, new_key in zip(old_keys, new_data.keys()):
+            if str(old_key) != new_key:
+                update_task_links(data, list_abbr, str(old_key), new_key)
         data[list_name]['tasks'] = new_data
 
         print(Fore.GREEN + f"Tasks in list '{list_abbr}' updated successfully." + Style.RESET_ALL)
 
     write_json_file(data, json_file_path)
+
 
 def delete_task_properties(directory, json_file_path, category_abbr, task_number, properties=None, template_name=None):
     data = read_json_file(json_file_path)
@@ -102,31 +123,44 @@ def delete_task_properties(directory, json_file_path, category_abbr, task_number
 def delete_link(json_file_path, src_category_abbr, src_task_number, dst_category_abbr, dst_task_number):
     data = read_json_file(json_file_path)
 
-    def get_category_from_abbr(data, src_category_abbr):
+    def get_category_from_abbr(data, category_abbr):
         for category, details in data.items():
-            if 'abbreviation' in details and details['abbreviation'] == src_category_abbr:
+            if 'abbreviation' in details and details['abbreviation'] == category_abbr:
                 return category
         return None
 
     src_category = get_category_from_abbr(data, src_category_abbr)
+    dst_category = get_category_from_abbr(data, dst_category_abbr)
 
-    if src_category is None:
-        print("Source category not found.")
+    if not src_category or not dst_category:
+        print("One or both categories not found.")
         return
 
     src_tasks = data[src_category].get('tasks', {})
-    src_task = src_tasks.get(str(src_task_number))
+    dst_tasks = data[dst_category].get('tasks', {})
     
-    if not src_task:
-        print(f"Source task number {src_task_number} not found in category {src_category_abbr}.")
+    src_task = src_tasks.get(str(src_task_number))
+    dst_task = dst_tasks.get(str(dst_task_number))
+    
+    if not src_task or not dst_task:
+        print(f"One or both tasks not found in specified categories.")
         return
 
     link_notation = f"{dst_category_abbr.lower()} {dst_task_number}"
+    reverse_link_notation = f"{src_category_abbr.lower()} {src_task_number}"
+
+    link_removed = False
     if 'nodes' in src_task and link_notation in src_task['nodes']:
         src_task['nodes'].remove(link_notation)
-        print(f"Link removed between {src_category_abbr} {src_task_number} and {dst_category_abbr} {dst_task_number}.")
+        print(f"Link removed from {src_category_abbr} {src_task_number} to {dst_category_abbr} {dst_task_number}.")
+        link_removed = True
+
+    if 'nodes' in dst_task and reverse_link_notation in dst_task['nodes']:
+        dst_task['nodes'].remove(reverse_link_notation)
+        print(f"Link removed from {dst_category_abbr} {dst_task_number} to {src_category_abbr} {src_task_number}.")
+        link_removed = True
+
+    if link_removed:
+        write_json_file(data, json_file_path)
     else:
-        print(f"Link not found between {src_category_abbr} {src_task_number} and {dst_category_abbr} {dst_task_number}.")
-
-    write_json_file(data, json_file_path)
-
+        print("No links were found to remove.")
