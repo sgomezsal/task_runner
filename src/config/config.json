@@ -1,0 +1,7 @@
+{
+    "default_category": "InBox",
+    "abbreviation": "ib",
+    "file_extension": ".md",
+    "task_directory": "~/task_runner/src/.app_data",
+    "data_file_path": "~/task_runner/src/.app_data/data.json"
+}

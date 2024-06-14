@@ -1,0 +1,25 @@
+{
+    "InBox": {
+        "abbreviation": "ib",
+        "items": [
+            {
+                "complete": false,
+                "title": "Task 1",
+                "file": "/home/sgomezsal/task_runner/src/.app_data/task_1.md",
+                "created": "2024-06-10 20:50:50",
+                "uuid": "f244aa01-4fc9-46e2-b884-877f75a8d36d"
+            },
+            {
+                "complete": false,
+                "title": "Task 2",
+                "file": "/home/sgomezsal/task_runner/src/.app_data/task_2.md",
+                "created": "2024-06-10 20:50:57",
+                "uuid": "7bb83e54-8929-4bb1-91fe-e7f3ea8fb1a1"
+            }
+        ]
+    },
+    "Reference Material": {
+        "abbreviation": "rf",
+        "items": []
+    }
+}
